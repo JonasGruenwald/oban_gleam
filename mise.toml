@@ -1,0 +1,7 @@
+[tools]
+gleam = "1.11"
+erlang = "28"
+elixir = "1.18.4-otp-28"
+
+[env]
+_.file = '.env'
