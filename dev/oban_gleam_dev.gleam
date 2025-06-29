@@ -1,3 +1,4 @@
+import gleam/option
 import gleam/dict
 import gleam/dynamic
 import gleam/dynamic/decode
@@ -38,7 +39,7 @@ fn start() {
   repo.default_config()
   |> repo.database("oban_gleam_dev")
   |> repo.username("oban_gleam_user")
-  |> repo.password("dev")
+  |> repo.password(option.Some("dev"))
   |> repo.apply_config()
 
   // Configure Oban

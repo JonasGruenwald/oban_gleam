@@ -53,7 +53,6 @@ Oban can be configured through a builder and it's config passed to its start fun
 
 ```gleam
 import oban_gleam as oban
-// ...
 
 fn start_system() {
   // Configure Ecto Repo

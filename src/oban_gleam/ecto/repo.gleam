@@ -30,8 +30,8 @@ pub fn default_config() {
 // -- CONFIGURATION
 
 /// Password for the user.
-pub fn password(config: Config, password: String) -> Config {
-  Config(..config, password: Some(password))
+pub fn password(config: Config, password: Option(String)) -> Config {
+  Config(..config, password: password)
 }
 
 /// Username for the database connection.

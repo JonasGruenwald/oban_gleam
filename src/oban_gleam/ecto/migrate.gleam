@@ -1,3 +1,4 @@
+import gleam/option
 import envoy
 import gleam/int
 import oban_gleam/ecto/repo
@@ -32,7 +33,7 @@ fn apply_env_username(config: repo.Config) -> repo.Config {
 
 fn apply_env_password(config: repo.Config) -> repo.Config {
   case envoy.get("PGPASSWORD") {
-    Ok(password) -> repo.password(config, password)
+    Ok(password) -> repo.password(config, option.Some(password))
     Error(_) -> config
   }
 }
