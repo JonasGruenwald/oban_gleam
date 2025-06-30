@@ -27,6 +27,6 @@ gleam_time = ">= 1.2.0 and < 2.0.0"
 gleeunit = ">= 1.0.0 and < 2.0.0"
 simplifile = ">= 2.3.0 and < 3.0.0"
 
-[erlang]
-# TODO: remove before publishing (I'm definitely gonna forget)
-extra_applications = ["wx", "observer"]
+# Enable for observer debugging
+# [erlang]
+# extra_applications = ["wx", "observer"]
