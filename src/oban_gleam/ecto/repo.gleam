@@ -1,4 +1,4 @@
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, None}
 import gleam/otp/actor
 import gleam/otp/supervision
 import oban_gleam/internal/util

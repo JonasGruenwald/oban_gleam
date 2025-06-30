@@ -67,9 +67,6 @@ fn start_system() {
     oban.default_config()
     |> oban.worker("hello_worker", hello_worker)
     |> oban.queues([#("default", 10), #("mailers", 1)])
-    |> oban.cron_jobs([
-      oban.Cron(expression: "* * * * *", job: oban.new_job("periodic_worker")),
-    ])
   let assert Ok(_) = oban.attach_default_logger(logging.Debug, False)
 
   supervisor.new(supervisor.OneForOne)
@@ -85,20 +82,10 @@ Oban only allows defining workers by creating modules that implement a behaviour
 
 Worker functions are registered under a key, which is stringly typed, as it gets serialized to the database like all other job data.
 
-Job arguments are a map of arbitrary data that is serialized, stored in the database, and deserialized internally by Oban, therefore they are passed as dynamic and must be decoded in the worker function.
+Job arguments are a map (Gleam dict) of arbitrary data that is serialized, stored in the database, and deserialized internally by Oban, therefore they are passed as dynamic and must be decoded in the worker function.
 
 ```gleam
-pub fn main() {
-  let assert Ok(_) = start_system()
-  let assert Ok(_) =
-    oban.new_job("hello_worker")
-    |> oban.arg("name", dynamic.string("Joe"))
-    |> oban.schedule_in(seconds: 5)
-    |> oban.insert()
-  process.sleep_forever()
-}
-
-fn hello_worker(job: oban.Job) -> JobResult {
+fn hello_worker(job: Job) -> JobResult {
   case decode.run(job.args, decode.at(["name"], decode.string)) {
     Ok(name) -> {
       io.println("Hello " <> name)
@@ -109,9 +96,30 @@ fn hello_worker(job: oban.Job) -> JobResult {
 }
 ```
 
+Worker functions accept a `Job` and return a `JobResult`, see:
+https://hexdocs.pm/oban/Oban.Worker.html#t:result/0
+
+The `JobResult`'s `Ok` variant does not accept a value, as that would be discarded by Oban anyways. The result is not a regular Gleam result, as additional variants like `Cancel` and `Snooze` can be returned.
+
+### Scheduling Jobs
+
+Jobs are constructed with a builder and passed to `oban.insert` to be scheduled.
+
+All job config, such as the queue to use, scheduling time, how many times the job should be retried in case of failure etc. is defined through the job builder.
+
+```gleam
+oban.new_job("hello_worker")
+|> oban.arg("name", dynamic.string("Joe"))
+|> oban.max_attempts(10)
+|> oban.queue("default")
+|> oban.tags(["user"])
+|> oban.schedule_in(seconds: 5)
+|> oban.insert()
+```
+
 ### Cron Jobs
 
-Cron jobs can be defined in the config
+Cron jobs can be defined in the config, they are also defined through the job builder.
 
 ```gleam
 let oban_config =
@@ -121,3 +129,11 @@ let oban_config =
     oban.Cron(expression: "* * * * *", job: oban.new_job("periodic_worker")),
   ])
 ```
+
+## Type Safety Notes and Considerations
+
+Oban serializes job parameters like the job and queue name and stores them in the database when scheduling a job.
+
+This means that job name and queue persist between application restarts / deployments, it's therefore not possible to make them type safe in my view, so they are both defined as string keys.
+
+For this reason, it's possible to schedule a job for a worker or queue that doesn't actually exist in the current system – I suggest to use exported constants for job and queue names to avoid this.

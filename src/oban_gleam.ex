@@ -114,15 +114,20 @@ defmodule ObanGleam do
   end
 
   def insert({:job_builder, worker, args, opts}) do
-    complete_args = Map.put(args, "__worker__", worker)
+    case ObanGleam.Internal.WorkerRegistry.get_worker(worker) do
+      {:ok, _} ->
+        complete_args = Map.put(args, "__worker__", worker)
+        case __MODULE__.new(complete_args, opts)
+             |> Oban.insert() do
+          {:ok, job} ->
+            {:ok, job}
 
-    case __MODULE__.new(complete_args, opts)
-         |> Oban.insert() do
-      {:ok, job} ->
-        {:ok, job}
+          {:error, reason} ->
+            {:error, {:insert_failure, inspect(reason)}}
+        end
 
       {:error, reason} ->
-        {:error, {:insert_failure, inspect(reason)}}
+        {:error, {:invalid_worker_name}}
     end
   end
 

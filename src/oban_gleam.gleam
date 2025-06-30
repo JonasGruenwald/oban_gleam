@@ -26,7 +26,7 @@ pub opaque type Config {
     workers: List(#(String, Worker)),
   )
 }
-
+ 
 pub type Queue =
   #(String, Int)
 
@@ -176,7 +176,7 @@ type WorkerArgs =
   dict.Dict(String, dynamic.Dynamic)
 
 pub type JobInsertError {
-  InvalidWorkerModule
+  InvalidWorkerName
   InsertFailure(String)
 }
 

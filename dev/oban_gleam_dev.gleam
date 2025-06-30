@@ -1,5 +1,4 @@
 import gleam/option
-import gleam/dict
 import gleam/dynamic
 import gleam/dynamic/decode
 import gleam/erlang/process
@@ -14,6 +13,9 @@ pub fn main() {
   let assert Ok(_) =
     oban.new_job("hello_worker")
     |> oban.arg("name", dynamic.string("Joe"))
+    |> oban.max_attempts(10)
+    |> oban.queue("default")
+    |> oban.tags(["user"])
     |> oban.schedule_in(seconds: 5)
     |> oban.insert()
   process.sleep_forever()
