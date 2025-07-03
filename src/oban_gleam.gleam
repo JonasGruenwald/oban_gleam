@@ -3,7 +3,7 @@ import gleam/dict
 import gleam/dynamic
 import gleam/erlang/atom.{type Atom}
 import gleam/list
-import gleam/option.{type Option, None}
+import gleam/option.{type Option, None, Some}
 import gleam/otp/actor
 import gleam/otp/static_supervisor as supervisor
 import gleam/otp/supervision
@@ -169,6 +169,7 @@ pub opaque type JobBuilder {
     worker: String,
     args: WorkerArgs,
     opts: List(#(Atom, dynamic.Dynamic)),
+    timeout: Option(Int)
   )
 }
 
@@ -181,7 +182,7 @@ pub type JobInsertError {
 }
 
 pub fn new_job(worker worker: String) -> JobBuilder {
-  JobBuilder(worker: worker, args: dict.new(), opts: [])
+  JobBuilder(worker: worker, args: dict.new(), opts: [], timeout: None)
 }
 
 pub fn set_args(builder: JobBuilder, args: WorkerArgs) {
@@ -227,6 +228,10 @@ pub fn schedule_at(builder: JobBuilder, timestamp: timestamp.Timestamp) {
     #(atom.create("schedule_at"), time_to_elixir_datetime(seconds, nanoseconds)),
     ..builder.opts
   ])
+}
+
+pub fn timeout(builder: JobBuilder, milliseconds timeout: Int){
+  JobBuilder(..builder, timeout: Some(timeout))
 }
 
 pub fn tags(builder: JobBuilder, tags: List(String)) {

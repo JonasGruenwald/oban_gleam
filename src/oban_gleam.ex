@@ -17,6 +17,14 @@ defmodule ObanGleam do
     end
   end
 
+  @impl true
+  def timeout(%_{args: %{"__timeout__" => timeout}}), do: timeout
+
+  @impl true
+  def timeout(_job) do
+    :infinity
+  end
+
   def start_elixir_module("Elixir." <> _ = name, opts) when is_binary(name) do
     module = String.to_atom(name)
     Code.ensure_loaded(module)
@@ -76,8 +84,15 @@ defmodule ObanGleam do
           [
             {Oban.Plugins.Cron,
              crontab:
-               Enum.map(cron_jobs, fn {:cron, expression, {:job_builder, worker, args, opts}} ->
+               Enum.map(cron_jobs, fn {:cron, expression, {:job_builder, worker, args, opts, timeout}} ->
                  complete_args = Map.put(args, "__worker__", worker)
+
+                 complete_args =
+                   case timeout do
+                     {:some, timeout} -> Map.put(complete_args, "__timeout__", timeout)
+                     _ -> complete_args
+                   end
+
                  opts = Keyword.put(opts, :args, complete_args)
 
                  {
@@ -113,10 +128,17 @@ defmodule ObanGleam do
     end
   end
 
-  def insert({:job_builder, worker, args, opts}) do
+  def insert({:job_builder, worker, args, opts, timeout}) do
     case ObanGleam.Internal.WorkerRegistry.get_worker(worker) do
       {:ok, _} ->
         complete_args = Map.put(args, "__worker__", worker)
+
+        complete_args =
+          case timeout do
+            {:some, timeout} -> Map.put(complete_args, "__timeout__", timeout)
+            _ -> complete_args
+          end
+
         case __MODULE__.new(complete_args, opts)
              |> Oban.insert() do
           {:ok, job} ->
@@ -126,7 +148,7 @@ defmodule ObanGleam do
             {:error, {:insert_failure, inspect(reason)}}
         end
 
-      {:error, reason} ->
+      {:error, _} ->
         {:error, {:invalid_worker_name}}
     end
   end
