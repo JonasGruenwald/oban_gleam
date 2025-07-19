@@ -84,7 +84,7 @@ defmodule ObanGleam do
           [
             {Oban.Plugins.Cron,
              crontab:
-               Enum.map(cron_jobs, fn {:cron, expression, {:job_builder, worker, args, opts, timeout}} ->
+               Enum.map(jobs, fn {:cron, expression, {:job_builder, worker, args, opts, timeout}} ->
                  complete_args = Map.put(args, "__worker__", worker)
 
                  complete_args =
